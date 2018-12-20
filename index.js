@@ -39,7 +39,7 @@ slackMessages.action('poll:delete', (payload, respond) => {
   var poll = bot.polls[payload.channel.id +  "." + updatedMessage.ts];
   if (payload.user.name === poll.owner) {
     updatedMessage.attachments = [];
-    updatedMessage.text = "Le sondage a été supprimé"
+    updatedMessage.text = ":heavy_check_mark: Le sondage a été supprimé"
   }
   return updatedMessage;
 });
@@ -58,9 +58,10 @@ const urlencodedParser = bodyParser.raw({
 app.use(bodyParser.json());
 app.post('/', urlencodedParser, (req, res) => { 
   const message = queryString.parse(req.body.toString())
-  console.log(message);
-  tokenizer.tokenize(message.text + " ").then((res) => bot.displayPoll(message.channel_id, res, message.user_name))
-  res.json("Vous venez de créer un sondage avec succès")
+  return tokenizer.tokenize(message.text + " ")
+    .then((res) => bot.displayPoll(message.channel_id, res, message.user_name))
+    .then(() => res.json("Vous venez de créer un sondage avec succès"))
+    .catch(() => res.json("Je n'ai pas réussi à créer le sondage"))
 });
 app.use(bodyParser.urlencoded({ extended: false }));
 app.use('/slack/actions', slackMessages.expressMiddleware());

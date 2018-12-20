@@ -26,6 +26,7 @@
     "lodash.map": "^4.6.0",
     "normalize-port": "^1.0.0",
     "query-string": "^6.2.0",
-    "tokenizer2": "^2.0.1"
+    "tokenizer2": "^2.0.1",
+    "uuid": "^3.3.2"
   }
 }

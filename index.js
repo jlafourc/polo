@@ -16,14 +16,20 @@ const slackMessages =
 
 // Action handling
 
-slackMessages.action('order:start', (payload, respond) => {
-  bot.counter = bot.counter + 1
-  // Create an updated message that acknowledges the user's action (even if the result of that
-  // action is not yet complete).
+slackMessages.action('poll:vote', (payload, respond) => {
   const updatedMessage = cloneDeep(payload.original_message);
-  console.log(payload)
-  updatedMessage.attachments[0].title = 'Counter : ' + bot.counter
-  // The updated message is returned synchronously in response
+  var answer = parseInt(payload.actions[0].value)
+  var poll = bot.polls[payload.channel.id +  "." + updatedMessage.ts];
+  var option = poll.options[answer-1];
+  if (option.voters.includes(payload.user.name)) {
+    option.count = option.count - 1;
+    option.voters = option.voters.filter(voter => voter !== payload.user.name);
+  } else {
+    option.count = option.count + 1;
+    option.voters.push(payload.user.name);
+  }
+  const message = bot.createMessageFromPoll(poll);
+  updatedMessage.attachments[0].fields[0].value = message.attachments[0].fields[0].value;
   return updatedMessage;
 });
 
@@ -41,7 +47,7 @@ app.post('/', urlencodedParser, (req, res) => {
   const message = queryString.parse(req.body.toString())
   console.log(message);
   tokenizer.tokenize(message.text + " ").then((res) => bot.displayPoll(message.channel_id, res))
-  res.json(message.text)
+  res.json("Vous venez de créer un sondage avec succès")
 });
 app.use(bodyParser.urlencoded({ extended: false }));
 app.use('/slack/actions', slackMessages.expressMiddleware());

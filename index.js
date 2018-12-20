@@ -33,6 +33,19 @@ slackMessages.action('poll:vote', (payload, respond) => {
   return updatedMessage;
 });
 
+
+slackMessages.action('poll:delete', (payload, respond) => {
+  const updatedMessage = cloneDeep(payload.original_message);
+  var poll = bot.polls[payload.channel.id +  "." + updatedMessage.ts];
+  if (payload.user.name === poll.owner) {
+    updatedMessage.attachments = [];
+    updatedMessage.text = "Le sondage a été supprimé"
+  }
+  return updatedMessage;
+});
+
+
+
 // Create the server
 const port = normalizePort(process.env.PORT || '3000');
 const app = express();
@@ -46,7 +59,7 @@ app.use(bodyParser.json());
 app.post('/', urlencodedParser, (req, res) => { 
   const message = queryString.parse(req.body.toString())
   console.log(message);
-  tokenizer.tokenize(message.text + " ").then((res) => bot.displayPoll(message.channel_id, res))
+  tokenizer.tokenize(message.text + " ").then((res) => bot.displayPoll(message.channel_id, res, message.user_name))
   res.json("Vous venez de créer un sondage avec succès")
 });
 app.use(bodyParser.urlencoded({ extended: false }));

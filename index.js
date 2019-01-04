@@ -13,11 +13,11 @@ const queryString = require("query-string")
 
 // --- Slack Interactive Messages ---
 const slackMessages =
-  slackInteractiveMessages.createMessageAdapter(process.env.SLACK_VERIFICATION_TOKEN);
+  slackInteractiveMessages.createMessageAdapter(process.env.SLACK_SIGNING_SECRET);
 
 // Action handling
 
-slackMessages.action('poll:vote', (payload, respond) => {
+slackMessages.action({type: 'button', callbackId: 'poll_vote'}, (payload, respond) => {
   const updatedMessage = cloneDeep(payload.original_message);
   var answer = parseInt(payload.actions[0].value)
   return repository.findById(payload.channel.id +  "." + updatedMessage.ts)
@@ -43,7 +43,7 @@ slackMessages.action('poll:vote', (payload, respond) => {
 });
 
 
-slackMessages.action('poll:delete', (payload, respond) => {
+slackMessages.action('poll_delete', (payload, respond) => {
   const updatedMessage = cloneDeep(payload.original_message);
   return repository.findById(payload.channel.id +  "." + updatedMessage.ts)
     .then((poll) => { 
@@ -67,15 +67,13 @@ const urlencodedParser = bodyParser.raw({
   limit: "100kb"
 })
 
-app.use(bodyParser.json());
 app.post('/', urlencodedParser, (req, res) => { 
   const message = queryString.parse(req.body.toString())
   return tokenizer.tokenize(message.text + " ")
-    .then((res) => bot.displayPoll(message.channel_id, res, message.user_name))
-    .then(() => res.json("Vous venez de créer un sondage avec succès"))
-    .catch(() => res.json("Je n'ai pas réussi à créer le sondage"))
+  .then((res) => bot.displayPoll(message.channel_id, res, message.user_name))
+  .then(() => res.json("Vous venez de créer un sondage avec succès"))
+  .catch(() => res.json("Je n'ai pas réussi à créer le sondage"))
 });
-app.use(bodyParser.urlencoded({ extended: false }));
 app.use('/slack/actions', slackMessages.expressMiddleware());
 
 http.createServer(app).listen(port, () => {
